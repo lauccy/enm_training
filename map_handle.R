@@ -4,12 +4,28 @@ library(tmaptools)
 library(geosphere)
 library(rgdal)
 library(sf)
+library(tidyverse)
 
 #create a mask with random numbers
-mask<-raster("../Supp/bioclim/bio1.asc")
-values(mask)[!is.na(values(mask))]<-c(1:length(values(mask)[!is.na(values(mask))]))
+getwd()
+# mask <- raster("../Data/bioclim/10minus/bio1.asc") # Cannot create a RasterLayer object from this file. (file does not exist)
+
+setwd("D:/工作/2013 PFS-Tropical Asia/PFS_Fixed_AFEC-X/AFEC-X 2021/PPTs etc/1111-12 QiaoHJ_SDM/enm_training/Data/bioclim/10minus")
+mask <- raster::raster("bio1.asc")
 plot(mask)
-writeRaster(mask, "../Supp/mask.tif")
+
+# values(mask)[!is.na(values(mask))]<-c(1:length(values(mask)[!is.na(values(mask))])) # does not work
+
+# ?values # two r packages have the same function use raster::values
+
+raster::values(mask)[!is.na(raster::values(mask))]<-c(1:length(raster::values(mask)[!is.na(raster::values(mask))])) # works now # why do this ?
+
+plot(mask)
+
+setwd("D:/工作/2013 PFS-Tropical Asia/PFS_Fixed_AFEC-X/AFEC-X 2021/PPTs etc/1111-12 QiaoHJ_SDM/enm_training/Data")
+
+raster::writeRaster(mask, "mask.tif", overwrite=TRUE)
+# ?writeRaster
 
 #greate circle distance
 
@@ -43,7 +59,25 @@ distHaversine(p_Sicilia, p_north_Sicilia, r=6378137)
 distHaversine(p_Sicilia, p_south_Sicilia, r=6378137)
 
 #show maps
-bio1<-raster("../Supp/bioclim/10minus/bio1.asc")
+# bio1<-raster("../Supp/bioclim/10minus/bio1.asc")
+setwd("D:/工作/2013 PFS-Tropical Asia/PFS_Fixed_AFEC-X/AFEC-X 2021/PPTs etc/1111-12 QiaoHJ_SDM/enm_training/Data/bioclim/10minus")
+bio1<-raster("bio1.asc")
+
+x <- 116.38
+y <- 39.91
+
+p <- data.frame(x, y)
+class(p)
+p
+
+head(occ)
+
+raster::extract(bio1, p)
+
+beijingpoint <- sf::st_as_sf(p, coords = c("x","y"),
+             crs = st_crs(longlat_proj))
+
+setwd("D:/工作/2013 PFS-Tropical Asia/PFS_Fixed_AFEC-X/AFEC-X 2021/PPTs etc/1111-12 QiaoHJ_SDM/enm_training")
 occ<-read.csv("Data/occ.csv", stringsAsFactors = F)
 plot(bio1)
 points(occ$x, occ$y, pch=".")
@@ -77,11 +111,13 @@ plot3d(hLow, guides=F)
 #European<-continents[which(continents$CONTINENT=="Europe"),]
 #plot(European)
 
-continents<-st_read("../Supp/continents/continent.shp")
+# continents<-st_read("../Supp/continents/continent.shp")
+
+continents<-st_read("Data/Archive/continent.shp") #ljx modified according to my own folders 
 st_crs(continents)<-st_crs(bio1)
 European<-continents[which(continents$CONTINENT=="Europe"),]
 plot(st_geometry(European))
-st_write(European, "../Supp/continents/European.shp")
+st_write(European, "Data/Archive//European.shp")
 European_simp<-st_simplify(European)
 plot(st_geometry(European_simp))
 
